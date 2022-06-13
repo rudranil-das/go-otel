@@ -28,6 +28,7 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	"go.opentelemetry.io/otel/exporters/otlp/internal/retry"
@@ -129,6 +130,12 @@ func (d *client) UploadTraces(ctx context.Context, protoSpans []*tracepb.Resourc
 	pbRequest := &coltracepb.ExportTraceServiceRequest{
 		ResourceSpans: protoSpans,
 	}
+
+	// if Writer is configured, then redirect to writer only, skip uploading
+	if d.generalCfg.Writer != nil {
+		return d.writeTraces(pbRequest)
+	}
+
 	rawRequest, err := proto.Marshal(pbRequest)
 	if err != nil {
 		return err
@@ -178,6 +185,16 @@ func (d *client) UploadTraces(ctx context.Context, protoSpans []*tracepb.Resourc
 		}
 		return rErr
 	})
+}
+
+func (d *client) writeTraces(pbRequest *coltracepb.ExportTraceServiceRequest) error {
+	jsonBytes, err := protojson.Marshal(pbRequest)
+	if err != nil {
+		return err
+	}
+
+	_, err = d.generalCfg.Writer.Write(jsonBytes)
+	return err
 }
 
 func (d *client) newRequest(body []byte) (request, error) {

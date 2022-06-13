@@ -17,6 +17,7 @@ package otlpconfig // import "go.opentelemetry.io/otel/exporters/otlp/otlptrace/
 import (
 	"crypto/tls"
 	"fmt"
+	"io"
 	"time"
 
 	"google.golang.org/grpc"
@@ -63,6 +64,9 @@ type (
 		ServiceConfig      string
 		DialOptions        []grpc.DialOption
 		GRPCConn           *grpc.ClientConn
+
+		// writer for redirecting to console/logs
+		Writer io.Writer
 	}
 )
 
@@ -302,6 +306,13 @@ func WithHeaders(headers map[string]string) GenericOption {
 func WithTimeout(duration time.Duration) GenericOption {
 	return newGenericOption(func(cfg Config) Config {
 		cfg.Traces.Timeout = duration
+		return cfg
+	})
+}
+
+func WithWriter(w io.Writer) HTTPOption {
+	return NewHTTPOption(func(cfg Config) Config {
+		cfg.Writer = w
 		return cfg
 	})
 }

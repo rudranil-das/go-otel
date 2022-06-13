@@ -16,6 +16,7 @@ package otlptracehttp // import "go.opentelemetry.io/otel/exporters/otlp/otlptra
 
 import (
 	"crypto/tls"
+	"io"
 	"time"
 
 	"go.opentelemetry.io/otel/exporters/otlp/internal/retry"
@@ -113,4 +114,9 @@ func WithTimeout(duration time.Duration) Option {
 // error for a total of 1 minute.
 func WithRetry(rc RetryConfig) Option {
 	return wrappedOption{otlpconfig.WithRetry(retry.Config(rc))}
+}
+
+// WithWriter sets the export stream destination.
+func WithWriter(w io.Writer) Option {
+	return wrappedOption{otlpconfig.WithWriter(w)}
 }
